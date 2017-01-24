@@ -1,0 +1,14 @@
+#!/bin/bash
+
+OUTPUT=$(curl -f "$@" 2>&1)
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+  if (echo "$OUTPUT" | grep --quiet 'The requested URL returned error: 404'); then
+    echo '{"suites": []}'
+    exit 0
+  else
+    exit $RESULT
+  fi
+else
+  echo "$OUTPUT"
+fi

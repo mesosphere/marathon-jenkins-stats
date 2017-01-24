@@ -1,25 +1,12 @@
 # Using
 
-1: Download the necessary artifacts:
+1: Download the necessary artifacts and generate the report!
 
 ```
-make JOB=marathon-loop-tests AUTH=user:token download -j 8 -k
+make JOB=marathon-loop-tests AUTH=user:token -j 8
 ```
 
-
-2: Some jobs don't have results and will probably fail to download. The Makefile
-doesn't detect the difference. So, once you've downloaded everything that can,
-then ignore the rest:
-
-```
-make JOB=marathon-loop-tests AUTH=user:token ignore
-```
-
-3: Now, generate the report
-
-```
-make JOB=marathon-loop-tests AUTH=user:token
-```
+Report text file will be found at `marathon-loop-tests/report.txt`
 
 ## Other recipes
 
@@ -27,6 +14,18 @@ If you'd like to download a subset of files and run a report for a specific job:
 
 ```
 make JOB=public-test-marathon-phabricator IDS="$(seq 806 812 | xargs echo)"
+```
+
+Then, you can tell make to not download anymore:
+
+```
+make JOB=public-test-marathon-phabricator ignore
+```
+
+Then run it
+
+```
+make JOB=public-test-marathon-phabricator
 ```
 
 Note that if you already have downloaded jobs in a previous invokation of make, then those will be included in the report. Run this to purge out all downloaded job results:

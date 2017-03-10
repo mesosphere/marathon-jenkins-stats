@@ -39,7 +39,7 @@ $(JOB)/failures-by-test.json: $(JOB)/failures.json
 	cat $(JOB)/failures.json | jq 'map(.id as $$v | (.failures[] | {failure: ., job: $$v})) | group_by(.failure) | map({ failure: (.[0].failure), jobs: (map(.job) | sort)})' > $@.tmp
 	mv $@.tmp $@
 
-$(JOB)/summary.txt: $(JOB)/failures.json $(JOB)/details.txt
+$(JOB)/summary.txt: $(JOB)/failures.json
 	cat $(JOB)/failures.json | jq '.[] | .failures[] | .' -r | sort | uniq -c | sort -n | tee $@.tmp
 	echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(JOB)/failures.json)" | tee -a $@.tmp
 	mv $@.tmp $@

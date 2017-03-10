@@ -39,5 +39,5 @@ make JOB=public-test-marathon-phabricator purge
 See failed suites for a test containing some string:
 
 ```
-cat marathon-unstable-loop/failures-by-suite.json | jq 'map(select(.failure | contains("ping")))'
+jq 'map(select(.failure | contains("ping")))' marathon-unstable-loop/failures-by-test.json
 ```

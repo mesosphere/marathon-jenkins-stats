@@ -15,7 +15,7 @@ FILES:=$(foreach ID,$(IDS),$(JOB)/builds/$(ID).json)
 thing:
 	echo $(FETCH_COMMAND)
 clean:
-	rm -f $(JOB)/failures-by-job.json $(JOB)/summary.txt $(JOB)/failures.json
+	rm -f $(JOB)/failures-by-test.json $(JOB)/summary.txt $(JOB)/failures.json
 purge:
 	rm -rf $(JOB)
 
@@ -35,7 +35,7 @@ $(JOB)/failures.json: $(FILES)
 	jq '{id: (input_filename | capture("^.+/(?<id>\\d+).json$$") | .id | tonumber), failures: (.suites | map(.cases[] | select(.status == "FAILED" or .status == "REGRESSION") | .className + ":" + .name)), suiteRan: (.passCount != null)}' $(JOB)/builds/*.json | jq . -s > $@.tmp
 	mv $@.tmp $@
 
-$(JOB)/failures-by-job.json: $(JOB)/failures.json
+$(JOB)/failures-by-test.json: $(JOB)/failures.json
 	cat $(JOB)/failures.json | jq 'map(.id as $$v | (.failures[] | {failure: ., job: $$v})) | group_by(.failure) | map({ failure: (.[0].failure), jobs: (map(.job) | sort)})' > $@.tmp
 	mv $@.tmp $@
 
@@ -44,4 +44,4 @@ $(JOB)/summary.txt: $(JOB)/failures.json $(JOB)/details.txt
 	echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(JOB)/failures.json)" | tee -a $@.tmp
 	mv $@.tmp $@
 
-all: $(JOB)/summary.txt $(JOB)/failures-by-job.json
+all: $(JOB)/summary.txt $(JOB)/failures-by-test.json

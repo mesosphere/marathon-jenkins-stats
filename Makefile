@@ -25,14 +25,14 @@ $(JOB)/builds:
 ignore:
 	$(foreach file, $(FILES), [ ! -f $(file) ] && echo '{"suites": []}' > $(file); )
 
-$(JOB)/builds/%.json: | $(JOB)/builds
+$(subst %,\%,$(JOB))/builds/%.json: | $(JOB)/builds
 	bin/grab-job $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/testReport/api/json?pretty=true" > $@.tmp
 	mv $@.tmp $@
 
 download: $(FILES)
 
 $(JOB)/failures.json: $(FILES)
-	jq '{id: (input_filename | capture("^.+/(?<id>\\d+).json$$") | .id | tonumber), failures: (.suites | map(.cases[] | select(.status == "FAILED" or .status == "REGRESSION") | .className + ":" + .name)), suiteRan: (.passCount != null)}' $(JOB)/builds/*.json | jq . -s > $@.tmp
+	bin/summarize-failure-files $(JOB)/builds/*.json | jq . -s > $@.tmp
 	mv $@.tmp $@
 
 $(JOB)/failures-by-test.json: $(JOB)/failures.json

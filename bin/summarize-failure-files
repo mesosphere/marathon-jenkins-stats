@@ -1,0 +1,12 @@
+#!/bin/bash
+
+jq '{id: (input_filename | capture("^.+/(?<id>\\d+).json$") | .id | tonumber),
+  failures: (.suites | map(.cases[] | select(.status == "FAILED" or .status == "REGRESSION") | .className + ":" + .name)),
+  suiteRan: (.passCount != null),
+  times: {
+    firstTest: (.suites | map(.timestamp) | min),
+    lastTest: (.suites | map(.timestamp) | max) },
+  duration: .duration,
+  failCount: .failCount,
+  passCount: .passCount,
+  skipCount: .skipCount }' "$@"

@@ -1,4 +1,4 @@
-.PHONY: default all download clean purge load-into-postgres
+.PHONY: default all download clean purge load-into-postgres viz ignore clean-missing
 
 default: all
 
@@ -14,8 +14,15 @@ EXISTING_IDS:=$(notdir $(basename .json, $(wildcard $(JOB)/builds/*.json)))
 SAFE_JOB:=$(subst %,_,$(JOB))
 FILES:=$(foreach ID,$(IDS),$(SAFE_JOB)/builds/$(ID).json)
 
+# We create temporary files when Jenkins 404's in order to not cause jq to crash. This target clears them.
+clean-missing:
+	find $(SAFE_JOB)/builds -name *.json -type f -size -20c -exec echo rm -f {} \;
+
+# Clean all interim files EXCEPT downloaded build data
 clean:
 	rm -f $(SAFE_JOB)/failures-by-test.json $(SAFE_JOB)/summary.txt $(SAFE_JOB)/failures.json $(SAFE_JOB)/flattened*
+
+# Clean everything. build data included
 purge:
 	rm -rf $(SAFE_JOB)
 

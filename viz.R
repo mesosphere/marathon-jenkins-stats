@@ -56,7 +56,7 @@ svg(job_file("timeline.svg"), width=12, height=10)
     ## guides(fill = FALSE) +
     scale_y_reverse() +
     geom_text(aes(x = timestamp, y = idx - 0.5, label = suite), size=0.5, hjust="left", color = "grey") +
-    labs(y = "suite", title = paste("Timeline - Job #", job_id, sep = ""))
+    labs(y = "suite", title = paste("Timeline - Job #", job_id, " for ", job_name, sep = ""))
 )
 dev.off()
 
@@ -64,7 +64,7 @@ svg(job_file("durations.svg"), width=8, height=8)
 (
     ggplot(job, aes(area = duration, label = class_name, fill = tests_total)) +
     scale_fill_gradient(name = "tests_total", trans = "log") +
-    labs(title = paste("Suite Durations - Job #", job_id, sep = "")) +
+    labs(title = paste("Suite Durations - Job #", job_id, " for ", job_name, sep = "")) +
     geom_treemap(color = "black", size = 3) +
     geom_treemap_text(
         fontface = "italic",

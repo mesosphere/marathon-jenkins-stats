@@ -31,12 +31,13 @@ fails$package <- factor(fails$package)
 ## recent$package <- factor(recent$package)
 ## summary(recent)
 
-svg(job_file("failures.svg"), width=12, height = (length(unique(fails$class_name)) / 3) + 0.5)
+svg(job_file("failures.svg"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
 (
     ggplot(fails, aes(colour = class_name, x = job_id, y = class_name)) +
     geom_point(size = 3) +
-    labs(y = "", x = "Job Id", title = "Failed suites by Job (circle indicates failure)") +
-    guides(colour = FALSE)
+    labs(y = "", x = "Job Id", title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
+    guides(colour = FALSE) +
+    scale_x_continuous(expand = c(0,2))
 )
 dev.off()
 

@@ -58,9 +58,9 @@ $(SAFE_JOB)/flattened-suite.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(SAFE_JOB)
 	bin/concat-csv $(SAFE_JOB)/flattened-suite/*.tsv > $@.tmp
 	mv $@.tmp $@
 
-load-into-postgres: $(SAFE_JOB)/flattened-detail.tsv
-	cat lib/schema.sql | psql
-	psql -c "COPY jenkins_test_stats FROM '$$(pwd)/$(SAFE_JOB)/flattened-detail.tsv' CSV HEADER"
+load-into-postgres: $(SAFE_JOB)/flattened-suite.tsv $(SAFE_JOB)/flattened-detail.tsv
+	lib/schema.sql.sh "$(JOB)" | psql
+	lib/load.sql.sh "$(SAFE_JOB)" "$(JOB)" | psql
 
 download: $(FILES)
 

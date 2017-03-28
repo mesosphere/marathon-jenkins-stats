@@ -19,6 +19,8 @@ job_file <- function(filename) {
 
 df <- read.delim(job_file("flattened-suite.tsv"), header = TRUE, sep = "\t")
 
+job_ids <- unique(df$job_id)
+df$job_idx <- match(df$job_id, job_ids)
 df$passed <- as.logical(df$passed)
 df$timestamp <- as.POSIXct(sub("T", " ", df$timestamp))
 
@@ -31,17 +33,26 @@ fails$package <- factor(fails$package)
 ## recent$package <- factor(recent$package)
 ## summary(recent)
 
+plot_index <- as.logical(Sys.getenv("PLOT_IDX", "false"))
+if (plot_index) {
+    job_column <- quote(job_idx)
+    job_column_name <- "Job Index"
+} else {
+    job_column <- quote(job_id)
+    job_column_name <- "Job Id"
+}
+
 svg(job_file("failures.svg"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
 (
-    ggplot(fails, aes(colour = class_name, x = job_id, y = class_name)) +
+    ggplot(fails, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
     geom_point(size = 3) +
-    labs(y = "", x = "Job Id", title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
+    labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
     guides(colour = FALSE) +
     scale_x_continuous(expand = c(0,2))
 )
 dev.off()
 
-job_id <- max(df$job_id)
+job_id <- max(job_ids)
 # change this job_id to visualize a different job!
 job <- df[df$job_id == job_id, ]
 job <- job[order(job$timestamp), ]

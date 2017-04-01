@@ -9,6 +9,8 @@
 
 require("ggplot2")
 library("treemapify")
+## library("data.table")
+source("lib/common.R")
 
 job_name <- Sys.getenv("JOB", unset = "marathon-unstable-loop")
 job_name
@@ -16,22 +18,6 @@ job_name
 job_file <- function(filename) {
     return(paste(job_name, "/", filename, sep = ""))
 }
-
-df <- read.delim(job_file("flattened-suite.tsv"), header = TRUE, sep = "\t")
-
-job_ids <- unique(df$job_id)
-df$job_idx <- match(df$job_id, job_ids)
-df$passed <- as.logical(df$passed)
-df$timestamp <- as.POSIXct(sub("T", " ", df$timestamp))
-
-fails <- df[! df$passed, ]
-fails$class_name <- factor(fails$class_name)
-fails$package <- factor(fails$package)
-
-## recent <- fails[fails$job_id > 1600, ]
-## recent$class_name <- factor(recent$class_name)
-## recent$package <- factor(recent$package)
-## summary(recent)
 
 plot_index <- as.logical(Sys.getenv("PLOT_IDX", "false"))
 if (plot_index) {
@@ -42,13 +28,46 @@ if (plot_index) {
     job_column_name <- "Job Id"
 }
 
+
+df <- read_suite(job_file("flattened-suite.tsv"))
+job_idxs <- unique(df[,c("job_id", "job_idx")])
+job_ids <- job_idxs$job_id
+
+## suite_summary <- df[, .(total_run_count = .N, total_passes = sum(passed), total_fail_rate = (.N - sum(passed)) / .N), by = .(class_name, package)]
+fails <- df[! df$passed, ]
+fails$class_name <- factor(fails$class_name)
+fails$package <- factor(fails$package)
+## fails <- merge(fails, suite_summary)
+
+
+job_summary <- read.table(
+    job_file("job-details.tsv"),
+    header = TRUE,
+    sep = "\t",
+    colClasses = c("timestamp" = "character"))
+
+levels(job_summary$rev) <- mapply(function(s) substring(s, 1,7), levels(job_summary$rev))
+
+job_summary <- job_summary[match(job_summary$job_id, job_ids) > 0, ]
+job_summary$prior_rev <- unlist(list(job_summary$rev[1], job_summary$rev[-nrow(job_summary)]))
+job_summary <- merge(job_summary, job_idxs)
+
+changes <- job_summary[job_summary$rev != job_summary$prior_rev, ]
+changes$idx <- c(1:nrow(changes))
+changes$offset <- (changes$idx * 2) %% length(unique(fails$class_name))
+
+                          
+
+## pdf(job_file("failures.pdf"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
 svg(job_file("failures.svg"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
 (
-    ggplot(fails, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
-    geom_point(size = 3) +
+    ggplot(fails) +
+    geom_point(size = 3, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
     labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
     guides(colour = FALSE) +
-    scale_x_continuous(expand = c(0,2))
+    scale_x_continuous(expand = c(0,2)) +
+    geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
+    geom_text(data = changes, angle = 90, size = 2, alpha = 0.5, aes_(label = quote(rev), x = job_column, y = quote(offset)), nudge_x = -2)
 )
 dev.off()
 

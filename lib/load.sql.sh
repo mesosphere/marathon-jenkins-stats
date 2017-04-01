@@ -12,5 +12,5 @@ TABLE_PREFIX=$(table-prefix "$1")
 cat <<-EOF
 COPY ${TABLE_PREFIX}_suite_stats FROM '${BASE_FOLDER}/flattened-suite.tsv' CSV HEADER DELIMITER E'\t';
 
-COPY ${TABLE_PREFIX}_test_stats FROM '${BASE_FOLDER}/flattened-detail.tsv' CSV HEADER DELIMITER E'\t';
+COPY ${TABLE_PREFIX}_test_stats FROM '${BASE_FOLDER}/flattened-test.tsv' CSV HEADER DELIMITER E'\t';
 EOF

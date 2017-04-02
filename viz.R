@@ -45,31 +45,49 @@ job_summary <- read.table(
     header = TRUE,
     sep = "\t",
     colClasses = c("timestamp" = "character"))
-
+job_summary <- job_summary[!job_summary$result == "ABORTED",]
+job_summary$rev <- factor(job_summary$rev)
 levels(job_summary$rev) <- mapply(function(s) substring(s, 1,7), levels(job_summary$rev))
 
-job_summary <- job_summary[match(job_summary$job_id, job_ids) > 0, ]
+job_summary <- job_summary[!is.na(match(job_summary$job_id, job_ids)), ]
 job_summary$prior_rev <- unlist(list(job_summary$rev[1], job_summary$rev[-nrow(job_summary)]))
 job_summary <- merge(job_summary, job_idxs)
 
+calc_jitter_factor <- function(nrows, failure_class_name_count) {
+    label_jitter_factor <- greatest.prime(((failure_class_name_count - 1) / 2) - 1)
+    
+    return ((c(1:nrows) * label_jitter_factor) %% failure_class_name_count +1)
+}
+
+failure_class_name_count <- length(unique(fails$class_name))
+label_jitter_factor <- greatest.prime((failure_class_name_count / 2) - 1)
 changes <- job_summary[job_summary$rev != job_summary$prior_rev, ]
 changes$idx <- c(1:nrow(changes))
-changes$offset <- (changes$idx * 2) %% length(unique(fails$class_name))
+changes$offset <- calc_jitter_factor(nrow(changes), failure_class_name_count)
 
-                          
 
-## pdf(job_file("failures.pdf"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
-svg(job_file("failures.svg"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
-(
-    ggplot(fails) +
-    geom_point(size = 3, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
-    labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
-    guides(colour = FALSE) +
-    scale_x_continuous(expand = c(0,2)) +
-    geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
-    geom_text(data = changes, angle = 90, size = 2, alpha = 0.5, aes_(label = quote(rev), x = job_column, y = quote(offset)), nudge_x = -2)
-)
-dev.off()
+render.twice <- function (fn, file.prefix, width, height) {
+    pdf(paste(file.prefix, "pdf", sep="."), width=width, height=height)
+    print(fn())
+    dev.off()
+    svg(paste(file.prefix, "svg", sep="."), width=width, height=height)
+    print(fn())
+    dev.off()
+    print("lol")
+}
+
+render.twice(function() {
+    return
+    (
+        ggplot(fails) +
+        geom_point(size = 3, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
+        labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
+        guides(colour = FALSE) +
+        scale_x_continuous(expand = c(0,2)) +
+        geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
+        geom_text(data = changes, angle = 90, size = 2, alpha = 0.5, aes_(label = quote(rev), x = job_column, y = quote(offset)), nudge_x = -3)
+    )
+}, job_file("failures"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
 
 job_id <- max(job_ids)
 # change this job_id to visualize a different job!

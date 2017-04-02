@@ -67,7 +67,7 @@ $(FOLDER)/flattened-suite.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/fla
 	mv $@.tmp $@
 
 $(FOLDER)/job-details.tsv: $(DETAIL_FILES)
-	jq -f lib/job-details-tsv.jq -s marathon-unstable-loop/job-details/*.json -r > $@.tmp
+	jq -f lib/job-details-tsv.jq -s $(FOLDER)/job-details/*.json -r > $@.tmp
 	mv $@.tmp $@
 
 load-into-postgres: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-test.tsv

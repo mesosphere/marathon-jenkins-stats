@@ -45,22 +45,31 @@ job_summary <- read.table(
     header = TRUE,
     sep = "\t",
     colClasses = c("timestamp" = "character"))
-job_summary <- job_summary[!job_summary$result == "ABORTED",]
+job_summary <- job_summary[!is.na(job_summary$rev) & !(job_summary$rev == ""),]
 job_summary$rev <- factor(job_summary$rev)
 levels(job_summary$rev) <- mapply(function(s) substring(s, 1,7), levels(job_summary$rev))
 
 job_summary <- job_summary[!is.na(match(job_summary$job_id, job_ids)), ]
-job_summary$prior_rev <- unlist(list(job_summary$rev[1], job_summary$rev[-nrow(job_summary)]))
+if (nrow(job_summary) > 0) {
+    job_summary$prior_rev <- unlist(list(job_summary$rev[1], job_summary$rev[-nrow(job_summary)]))
+} else {
+    job_summary$prior_rev <- job_summary$rev
+}
+
+
 job_summary <- merge(job_summary, job_idxs)
 
 calc_jitter_factor <- function(nrows, failure_class_name_count) {
-    label_jitter_factor <- greatest.prime(((failure_class_name_count - 1) / 2) - 1)
-    
-    return ((c(1:nrows) * label_jitter_factor) %% failure_class_name_count +1)
+    if (nrows < 4) {
+        return (1)
+    } else {
+      label_jitter_factor <- greatest.prime(((failure_class_name_count - 1) / 2) - 1)
+
+      return ((c(1:nrows) * label_jitter_factor) %% failure_class_name_count +1)
+    }
 }
 
 failure_class_name_count <- length(unique(fails$class_name))
-label_jitter_factor <- greatest.prime((failure_class_name_count / 2) - 1)
 changes <- job_summary[job_summary$rev != job_summary$prior_rev, ]
 changes$idx <- c(1:nrow(changes))
 changes$offset <- calc_jitter_factor(nrow(changes), failure_class_name_count)
@@ -73,7 +82,6 @@ render.twice <- function (fn, file.prefix, width, height) {
     svg(paste(file.prefix, "svg", sep="."), width=width, height=height)
     print(fn())
     dev.off()
-    print("lol")
 }
 
 render.twice(function() {

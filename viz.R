@@ -60,20 +60,20 @@ if (nrow(job_summary) > 0) {
 job_summary <- merge(job_summary, job_idxs)
 
 calc_jitter_factor <- function(nrows, failure_class_name_count) {
-    if (nrows < 4) {
-        return (1)
+    if (nrows == 0) {
+        return (as.numeric(NULL))
+    } else if (nrows < 4) {
+        return (c(1:nrows))
     } else {
       label_jitter_factor <- greatest.prime(((failure_class_name_count - 1) / 2) - 1)
-
       return ((c(1:nrows) * label_jitter_factor) %% failure_class_name_count +1)
     }
 }
 
 failure_class_name_count <- length(unique(fails$class_name))
 changes <- job_summary[job_summary$rev != job_summary$prior_rev, ]
-changes$idx <- c(1:nrow(changes))
+changes$idx <- if (nrow(changes) >= 1) c(1:nrow(changes)) else as.numeric(NULL)
 changes$offset <- calc_jitter_factor(nrow(changes), failure_class_name_count)
-
 
 render.twice <- function (fn, file.prefix, width, height) {
     pdf(paste(file.prefix, "pdf", sep="."), width=width, height=height)

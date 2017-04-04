@@ -30,8 +30,9 @@ if (plot_index) {
 
 
 df <- read_suite(job_file("flattened-suite.tsv"))
-job_idxs <- unique(df[,c("job_id", "job_idx")])
-job_ids <- job_idxs$job_id
+job_ids <- sort(unique(df$job_id))
+job_idxs <- data.frame(job_id = job_ids, job_idx = c(1:length(job_ids)))
+df <- merge(df, job_idxs)
 
 ## suite_summary <- df[, .(total_run_count = .N, total_passes = sum(passed), total_fail_rate = (.N - sum(passed)) / .N), by = .(class_name, package)]
 fails <- df[! df$passed, ]
@@ -40,11 +41,7 @@ fails$package <- factor(fails$package)
 ## fails <- merge(fails, suite_summary)
 
 
-job_summary <- read.table(
-    job_file("job-details.tsv"),
-    header = TRUE,
-    sep = "\t",
-    colClasses = c("timestamp" = "character"))
+job_summary <- read_job_summary(job_file("job-details.tsv"))
 job_summary <- job_summary[!is.na(job_summary$rev) & !(job_summary$rev == ""),]
 job_summary$rev <- factor(job_summary$rev)
 levels(job_summary$rev) <- mapply(function(s) substring(s, 1,7), levels(job_summary$rev))
@@ -57,16 +54,15 @@ if (nrow(job_summary) > 0) {
 }
 
 
-job_summary <- merge(job_summary, job_idxs)
+job_summary <- merge(job_summary, job_idxs, sort = FALSE)
 
 calc_jitter_factor <- function(nrows, failure_class_name_count) {
     if (nrows == 0) {
         return (as.numeric(NULL))
-    } else if (nrows < 4) {
-        return (c(1:nrows))
+    } else if (failure_class_name_count < 3) {
+        return ((c(1:nrows)) %% (failure_class_name_count) + 1)
     } else {
-      label_jitter_factor <- greatest.prime(((failure_class_name_count - 1) / 2) - 1)
-      return ((c(1:nrows) * label_jitter_factor) %% failure_class_name_count +1)
+        return ((c(1:nrows) * 2) %% (failure_class_name_count) + 1)
     }
 }
 
@@ -93,9 +89,9 @@ render.twice(function() {
         guides(colour = FALSE) +
         scale_x_continuous(expand = c(0,2)) +
         geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
-        geom_text(data = changes, angle = 90, size = 2, alpha = 0.5, aes_(label = quote(rev), x = job_column, y = quote(offset)), nudge_x = -3)
+        geom_text(data = changes, angle = 90, size = 2, alpha = 0.9, aes_(label = quote(rev), x = job_column, y = quote(offset)))
     )
-}, job_file("failures"), width=12, height = (length(unique(fails$class_name)) / 4) + 0.5)
+}, job_file("failures"), width=12, height = (length(unique(fails$class_name)) / 4) + 1)
 
 job_id <- max(job_ids)
 # change this job_id to visualize a different job!

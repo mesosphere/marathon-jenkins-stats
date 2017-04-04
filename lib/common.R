@@ -5,12 +5,21 @@ read_suite <- function (filename) {
         header = TRUE,
         sep = "\t",
         colClasses = c("timestamp" = "character"))
-    job_ids <- unique(df$job_id)
-    df$job_idx <- match(df$job_id, job_ids)
     df$passed <- as.logical(df$passed)
     df$timestamp <- as.POSIXct(sub("T", " ", df$timestamp))
     return (df)
 }
+
+read_job_summary <- function(filename) {
+    df <-  read.table(
+        job_file("job-details.tsv"),
+        header = TRUE,
+        sep = "\t",
+        colClasses = c("timestamp" = "character"))
+
+    return (df[order(df$job_id), ])
+}
+
 
 is.prime <- function(num) {
     if (num == 2) {

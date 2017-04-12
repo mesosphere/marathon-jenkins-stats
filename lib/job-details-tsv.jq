@@ -1,7 +1,6 @@
-# klsdjf
 ["job_id", "result", "duration", "branch", "rev", "timestamp"] as $headers |
-. | map(
-        (.actions | map(.buildsByBranchName | select(. != null) | to_entries[] | .value)[0]) as $action |
+. | map((.id | tonumber) as $id |
+        ((.actions | map(.buildsByBranchName | select(. != null) | to_entries[] | .value)) | map(select(.buildNumber == $id))[0]) as $action |
         [.id,
          .result,
          .duration,

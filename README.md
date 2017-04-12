@@ -42,6 +42,12 @@ See failed suites for a test containing some string:
 $ jq 'map(select(.failure | contains("ping")))' marathon-unstable-loop/failures-by-test.json
 ```
 
+# Load into Postgres
+
+You can load the data into postgres. (I haven't tested this with a remote instance, it may require that the data file is on a folder local to the master)
+
+1. Make sure `psql` can connect to the appropriate database. You can set the following environment variables
+
 # Visualizations
 
 To visualize the data set, you will need R installed. Because many of the dependencies have native extensions, you should install a version against which you can compile. For Mac OS X:

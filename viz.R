@@ -101,28 +101,30 @@ job$suite <- factor(paste(job$package, job$class_name, sep = "."))
 job$idx <- seq.int(nrow(job))
 job$integration <- grepl("integration", job$package)
 
-svg(job_file("timeline.svg"), width=12, height=10)
-(
-    ggplot(job, aes(xmin = timestamp, xmax = timestamp + duration, ymin = idx - 0.20, ymax = idx + 0.20)) +
-    geom_rect(aes(fill = integration)) +
-    ## guides(fill = FALSE) +
-    scale_y_reverse() +
-    geom_text(aes(x = timestamp, y = idx - 0.5, label = suite), size=0.5, hjust="left", color = "grey") +
-    labs(y = "suite", title = paste("Timeline - Job #", job_id, " for ", job_name, sep = ""))
-)
-dev.off()
+job$suite_with_duration <- paste(job$class_name, "\n", "(", round(job$duration, digits=1), "s", ")", sep = "")
 
-svg(job_file("durations.svg"), width=8, height=8)
-(
-    ggplot(job, aes(area = duration, label = class_name, fill = tests_total)) +
-    scale_fill_gradient(name = "tests_total", trans = "log") +
-    labs(title = paste("Suite Durations - Job #", job_id, " for ", job_name, sep = "")) +
-    geom_treemap(color = "black", size = 3) +
-    geom_treemap_text(
-        fontface = "italic",
-        colour = "white",
-        place = "centre",
-        grow = TRUE
+render.twice(function() {
+    (
+        ggplot(job, aes(xmin = timestamp, xmax = timestamp + duration, ymin = idx - 0.20, ymax = idx + 0.20)) +
+        geom_rect(aes(fill = integration)) +
+        ## guides(fill = FALSE) +
+        scale_y_reverse() +
+        geom_text(aes(x = timestamp, y = idx - 0.5, label = suite), size=0.5, hjust="left", color = "grey") +
+        labs(y = "suite", title = paste("Timeline - Job #", job_id, " for ", job_name, sep = ""))
     )
-)
-dev.off()
+}, job_file("timeline"), width=12, height=10)
+
+render.twice(function() {
+    (
+        ggplot(job, aes(area = duration, label = suite_with_duration, fill = tests_total)) +
+        scale_fill_gradient(name = "tests_total", trans = "log") +
+        labs(title = paste("Suite Durations - Job #", job_id, " for ", job_name, sep = "")) +
+        geom_treemap(color = "black", size = 3) +
+        geom_treemap_text(
+            fontface = "italic",
+            colour = "white",
+            place = "centre",
+            grow = TRUE
+        )
+    )
+}, job_file("durations"), width=8, height=8)

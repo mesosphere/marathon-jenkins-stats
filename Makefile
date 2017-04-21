@@ -21,23 +21,26 @@ clean-missing:
 
 # Clean all interim files EXCEPT downloaded build data
 clean:
-	rm -f $(FOLDER)/failures-by-test.json $(FOLDER)/*.txt $(FOLDER)/failures.json $(FOLDER)/*.tsv $(FOLDER)/*.svg
+	rm -rf $(FOLDER)/failures-by-test.json $(FOLDER)/*.txt $(FOLDER)/failures.json $(FOLDER)/*.tsv $(FOLDER)/*.svg $(FOLDER)/job-details.tsv $(FOLDER)/*.pdf $(FOLDER)/*.svg $(FOLDER)/marathon-unstable-loop $(FOLDER)/loaded $(FOLDER)/flattened-{detail,suite,job}*
 
 # Clean everything. build data included
 purge:
 	rm -rf $(FOLDER)
 
 $(FOLDER)/builds:
-	mkdir -p $(FOLDER)/builds
+	mkdir -p $@
 
 $(FOLDER)/job-details:
-	mkdir -p $(FOLDER)/job-details
+	mkdir -p $@
+
+$(FOLDER)/flattened-job:
+	mkdir -p $@
 
 $(FOLDER)/flattened-test:
-	mkdir -p $(FOLDER)/flattened-test
+	mkdir -p $@
 
 $(FOLDER)/flattened-suite:
-	mkdir -p $(FOLDER)/flattened-suite
+	mkdir -p $@
 
 ignore:
 	$(foreach file, $(TEST_FILES), [ ! -f $(file) ] && echo '{"suites": []}' > $(file); )
@@ -62,12 +65,20 @@ $(FOLDER)/flattened-suite/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-s
 	jq -r -f lib/flattened-suite-tsv.jq $< > $@.tmp 
 	mv $@.tmp $@
 
+$(FOLDER)/flattened-job/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-job
+	jq -r -f lib/flattened-job-tsv.jq $< > $@.tmp
+	mv $@.tmp $@
+
 $(FOLDER)/flattened-suite.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/flattened-suite/$(ID).tsv)
 	bin/concat-csv $(FOLDER)/flattened-suite/*.tsv > $@.tmp
 	mv $@.tmp $@
 
 $(FOLDER)/job-details.tsv: $(DETAIL_FILES)
 	jq -f lib/job-details-tsv.jq -s $(FOLDER)/job-details/*.json -r > $@.tmp
+	mv $@.tmp $@
+
+$(FOLDER)/flattened-job.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/flattened-job/$(ID).tsv)
+	bin/concat-csv $(FOLDER)/flattened-job/*.tsv > $@.tmp
 	mv $@.tmp $@
 
 load-into-postgres: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-test.tsv
@@ -89,6 +100,6 @@ $(FOLDER)/summary.txt: $(FOLDER)/failures.json
 	echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(FOLDER)/failures.json)" | tee -a $@.tmp
 	mv $@.tmp $@
 
-viz: $(FOLDER)/flattened-suite.tsv $(FOLDER)/job-details.tsv
+viz: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-job.tsv $(FOLDER)/job-details.tsv
 	JOB=$(FOLDER) R --no-save < viz.R
 all: $(FOLDER)/summary.txt $(FOLDER)/failures-by-test.json

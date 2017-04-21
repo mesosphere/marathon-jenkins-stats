@@ -19,6 +19,25 @@ job_file <- function(filename) {
     return(paste(job_name, "/", filename, sep = ""))
 }
 
+calc_jitter_factor <- function(nrows, failure_class_name_count) {
+    if (nrows == 0) {
+        return (as.numeric(NULL))
+    } else if (failure_class_name_count < 3) {
+        return ((c(1:nrows)) %% (failure_class_name_count) + 1)
+    } else {
+        return ((c(1:nrows) * 2) %% (failure_class_name_count) + 1)
+    }
+}
+
+render.twice <- function (fn, file.prefix, width, height) {
+    pdf(paste(file.prefix, "pdf", sep="."), width=width, height=height)
+    print(fn())
+    dev.off()
+    svg(paste(file.prefix, "svg", sep="."), width=width, height=height)
+    print(fn())
+    dev.off()
+}
+
 plot_index <- as.logical(Sys.getenv("PLOT_IDX", "false"))
 if (plot_index) {
     job_column <- quote(job_idx)
@@ -40,45 +59,35 @@ fails$class_name <- factor(fails$class_name)
 fails$package <- factor(fails$package)
 ## fails <- merge(fails, suite_summary)
 
+job_details <- read_job_details(job_file("job-details.tsv"))
+job_details <- job_details[!is.na(job_details$rev) & !(job_details$rev == ""),]
+job_details$rev <- factor(job_details$rev)
+levels(job_details$rev) <- mapply(function(s) substring(s, 1,7), levels(job_details$rev))
 
-job_summary <- read_job_summary(job_file("job-details.tsv"))
-job_summary <- job_summary[!is.na(job_summary$rev) & !(job_summary$rev == ""),]
-job_summary$rev <- factor(job_summary$rev)
-levels(job_summary$rev) <- mapply(function(s) substring(s, 1,7), levels(job_summary$rev))
+job_details <- job_details[!is.na(match(job_details$job_id, job_ids)), ]
+job_details$prior_rev <- shift(job_details$rev)
 
-job_summary <- job_summary[!is.na(match(job_summary$job_id, job_ids)), ]
-if (nrow(job_summary) > 0) {
-    job_summary$prior_rev <- unlist(list(job_summary$rev[1], job_summary$rev[-nrow(job_summary)]))
-} else {
-    job_summary$prior_rev <- job_summary$rev
-}
-
-
-job_summary <- merge(job_summary, job_idxs, sort = FALSE)
-
-calc_jitter_factor <- function(nrows, failure_class_name_count) {
-    if (nrows == 0) {
-        return (as.numeric(NULL))
-    } else if (failure_class_name_count < 3) {
-        return ((c(1:nrows)) %% (failure_class_name_count) + 1)
-    } else {
-        return ((c(1:nrows) * 2) %% (failure_class_name_count) + 1)
-    }
-}
+job_details <- merge(job_details, job_idxs, sort = FALSE)
 
 failure_class_name_count <- length(unique(fails$class_name))
-changes <- job_summary[job_summary$rev != job_summary$prior_rev, ]
+changes <- job_details[job_details$rev != job_details$prior_rev, ]
 changes$idx <- if (nrow(changes) >= 1) c(1:nrow(changes)) else as.numeric(NULL)
 changes$offset <- calc_jitter_factor(nrow(changes), failure_class_name_count)
 
-render.twice <- function (fn, file.prefix, width, height) {
-    pdf(paste(file.prefix, "pdf", sep="."), width=width, height=height)
-    print(fn())
-    dev.off()
-    svg(paste(file.prefix, "svg", sep="."), width=width, height=height)
-    print(fn())
-    dev.off()
-}
+deadzone <- data.frame(
+    job_id = c(2900), job_id_end = c(2950), y_min = c(0), y_max = c(failure_class_name_count + 1))
+
+jobs <- read_jobs(job_file("flattened-job.tsv"))
+jobs <- merge(jobs, job_idxs, all.x = TRUE)
+jobs$prior_non_empty <- shift(jobs$non_empty)
+deadzone_boundaries <- jobs[jobs$prior_non_empty != jobs$non_empty, ]
+deadzone_boundaries$next_job_id <- unshift(deadzone_boundaries$job_id)
+deadzone_boundaries <- deadzone_boundaries[!deadzone_boundaries$non_empty, ]
+deadzone <- data.frame(
+    job_id = deadzone_boundaries$job_id,
+    job_id_end = deadzone_boundaries$next_job_id,
+    ymin = c(0),
+    ymax = c(failure_class_name_count + 1))
 
 render.twice(function() {
     return
@@ -89,8 +98,13 @@ render.twice(function() {
         guides(colour = FALSE) +
         scale_x_continuous(expand = c(0,2)) +
         geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
-        geom_text(data = changes, angle = 90, size = 2, alpha = 0.9, aes_(label = quote(rev), x = job_column, y = quote(offset)))
+        geom_text(data = changes, angle = 90, size = 2, alpha = 0.9, aes_(label = quote(rev), x = job_column, y = quote(offset))) +
+        if(job_column == "job_id")
+            geom_rect(data = deadzone, aes(xmin = job_id, xmax = job_id_end, ymin = ymin, ymax = ymax), fill = "red", alpha = 0.2)
+        else
+            NULL
     )
+
 }, job_file("failures"), width=12, height = (length(unique(fails$class_name)) / 4) + 1)
 
 job_id <- max(job_ids)

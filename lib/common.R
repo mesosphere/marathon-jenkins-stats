@@ -1,3 +1,15 @@
+read_jobs <- function(filename) {
+    df <- read.delim(
+        "marathon-unstable-loop/flattened-job.tsv",
+        header = TRUE,
+        sep = "\t")
+    df$non_empty <- as.logical(df$non_empty)
+    df$total_count[is.na(df$total_count)] <- 0
+    df$pass_count[is.na(df$pass_count)] <- 0
+    df$fail_count[is.na(df$fail_count)] <- 0
+    df$skip_count[is.na(df$skip_count)] <- 0
+    return (df)
+}
 
 read_suite <- function (filename) {
     df <- read.delim(
@@ -10,7 +22,7 @@ read_suite <- function (filename) {
     return (df)
 }
 
-read_job_summary <- function(filename) {
+read_job_details <- function(filename) {
     df <-  read.table(
         job_file("job-details.tsv"),
         header = TRUE,
@@ -36,4 +48,18 @@ greatest.prime <- function(n) {
         if (is.prime(i)) return (i)
     }
     return (NA)
+}
+
+shift <- function(vector) {
+    if (length(vector) == 0)
+        return (vector)
+    else
+        return (unlist(list(vector[1], vector[-length(vector)])))
+}
+
+unshift <- function(vector) {
+    if (length(vector) == 0)
+        return (vector)
+    else
+        return (unlist(list(vector[-1], vector[length(vector)])))
 }

@@ -21,7 +21,7 @@ clean-missing:
 
 # Clean all interim files EXCEPT downloaded build data
 clean:
-	rm -rf $(FOLDER)/failures-by-test.json $(FOLDER)/*.txt $(FOLDER)/failures.json $(FOLDER)/*.tsv $(FOLDER)/*.svg $(FOLDER)/job-details.tsv $(FOLDER)/*.pdf $(FOLDER)/*.svg $(FOLDER)/marathon-unstable-loop $(FOLDER)/loaded $(FOLDER)/flattened-{detail,suite,job}*
+	rm -rf $(FOLDER)/failures-by-test.json $(FOLDER)/*.txt $(FOLDER)/failures.json $(FOLDER)/*.tsv $(FOLDER)/*.svg $(FOLDER)/job-details.tsv $(FOLDER)/*.pdf $(FOLDER)/*.svg $(FOLDER)/marathon-unstable-loop $(FOLDER)/loaded $(FOLDER)/flattened-{detail,suite,job}* $(FOLDER)/node-id.tsv
 
 # Clean everything. build data included
 purge:
@@ -40,6 +40,9 @@ $(FOLDER)/flattened-test:
 	mkdir -p $@
 
 $(FOLDER)/flattened-suite:
+	mkdir -p $@
+
+$(FOLDER)/node-id:
 	mkdir -p $@
 
 ignore:
@@ -67,6 +70,14 @@ $(FOLDER)/flattened-suite/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-s
 
 $(FOLDER)/flattened-job/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-job
 	jq -r -f lib/flattened-job-tsv.jq $< > $@.tmp
+	mv $@.tmp $@
+
+$(FOLDER)/node-id/%.html: | $(FOLDER)/node-id
+	bin/grab-node-id $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/execution/node/3/log/" > $@.tmp
+	mv $@.tmp $@
+
+$(FOLDER)/node-id.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/node-id/$(ID).html)
+	bin/parse-node-ids.sc $(FOLDER)/node-id/ | grep -v Compiling > $@.tmp # ammonite outputs this...
 	mv $@.tmp $@
 
 $(FOLDER)/flattened-suite.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/flattened-suite/$(ID).tsv)

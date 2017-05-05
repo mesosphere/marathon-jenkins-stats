@@ -38,16 +38,6 @@ render.twice <- function (fn, file.prefix, width, height) {
     dev.off()
 }
 
-plot_index <- as.logical(Sys.getenv("PLOT_IDX", "false"))
-if (plot_index) {
-    job_column <- quote(job_idx)
-    job_column_name <- "Job Index"
-} else {
-    job_column <- quote(job_id)
-    job_column_name <- "Job Id"
-}
-
-
 df <- read_suite(job_file("flattened-suite.tsv"))
 job_ids <- sort(unique(df$job_id))
 job_idxs <- data.frame(job_id = job_ids, job_idx = c(1:length(job_ids)))
@@ -89,23 +79,38 @@ deadzone <- data.frame(
     ymin = c(0),
     ymax = c(failure_class_name_count + 1))
 
-render.twice(function() {
-    return
-    (
-        ggplot(fails) +
-        geom_point(size = 3, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
-        labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
-        guides(colour = FALSE) +
-        scale_x_continuous(expand = c(0,2)) +
-        geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
-        geom_text(data = changes, angle = 90, size = 2, alpha = 0.9, aes_(label = quote(rev), x = job_column, y = quote(offset))) +
-        if(job_column == "job_id")
-            geom_rect(data = deadzone, aes(xmin = job_id, xmax = job_id_end, ymin = ymin, ymax = ymax), fill = "red", alpha = 0.2)
-        else
-            NULL
-    )
+for (plot_index in c(TRUE, FALSE)) {
+    if (plot_index) {
+        job_column <- quote(job_idx)
+        job_column_name <- "Job Index"
+        plot_name <- "failures-idx"
+    } else {
+        job_column <- quote(job_id)
+        job_column_name <- "Job Id"
+        plot_name <- "failures"
+    }
 
-}, job_file("failures"), width=12, height = (length(unique(fails$class_name)) / 4) + 1)
+    render.twice(function() {
+        return
+        (
+            ggplot(fails) +
+            geom_point(size = 3, aes_(colour = quote(class_name), x = job_column, y = quote(class_name))) +
+            labs(y = "", x = job_column_name, title = paste("Failed suites for", job_name, "by Job (circle indicates failure)")) +
+            guides(colour = FALSE) +
+            scale_x_continuous(expand = c(0,2)) +
+            geom_vline(data = changes, aes_(xintercept = job_column), linetype = 3, size=0.5, alpha = 0.1) +
+            geom_text(data = changes, angle = 90, size = 2, alpha = 0.9, aes_(label = quote(rev), x = job_column, y = quote(offset))) +
+            if(plot_index)
+                NULL
+            else
+                geom_rect(data = deadzone, aes(xmin = job_id, xmax = job_id_end, ymin = ymin, ymax = ymax), fill = "red", alpha = 0.2)
+        )
+
+    }, job_file(plot_name), width=12, height = (length(unique(fails$class_name)) / 4) + 1)
+}
+
+
+
 
 job_id <- max(job_ids)
 # change this job_id to visualize a different job!

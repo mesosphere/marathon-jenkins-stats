@@ -66,3 +66,11 @@ Once installed, you can render the visualizations like:
 ```
 $ make JOB=marathon-unstable-loop AUTH=user:token viz
 ```
+
+Some graphs are specfic to one job, e.g. `duration.pdf` visualizes the render
+times of each test suite for one test run. By default the build with the
+highest job id is visualized. However, one can specify a job id as follows:
+
+```
+$ make JOB=marathon-unstable-loop VIZ_JOB_ID-1337 AUTH=user:token viz
+```

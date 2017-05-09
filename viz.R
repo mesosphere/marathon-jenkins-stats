@@ -76,8 +76,8 @@ deadzone_boundaries <- deadzone_boundaries[!deadzone_boundaries$non_empty, ]
 deadzone <- data.frame(
     job_id = deadzone_boundaries$job_id,
     job_id_end = deadzone_boundaries$next_job_id,
-    ymin = c(0),
-    ymax = c(failure_class_name_count + 1))
+    ymin = rep(0, nrow(deadzone_boundaries)),
+    ymax = rep(failure_class_name_count + 1, nrow(deadzone_boundaries)))
 
 for (plot_index in c(TRUE, FALSE)) {
     if (plot_index) {
@@ -112,7 +112,7 @@ for (plot_index in c(TRUE, FALSE)) {
 
 
 
-job_id <- max(job_ids)
+job_id <- as.numeric(Sys.getenv("VIZ_JOB_ID", unset = max(job_ids)))
 # change this job_id to visualize a different job!
 job <- df[df$job_id == job_id, ]
 job <- job[order(job$timestamp), ]

@@ -111,6 +111,12 @@ $(FOLDER)/summary.txt: $(FOLDER)/failures.json
 	echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(FOLDER)/failures.json)" | tee -a $@.tmp
 	mv $@.tmp $@
 
+$(FOLDER)/unique_errors.txt: $(TEST_FILES)
+	jq '.suites[].cases[].errorDetails' marathon-sandbox/job/marathon-unstable-loop/builds/*.json | sort | uniq -c | sort -n | tee $@.tmp
+	echo "Unique errors: "
+	cat $@.tmp
+	mv $@.tmp $@
+
 viz: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-job.tsv $(FOLDER)/job-details.tsv
 	JOB=$(FOLDER) R --no-save < viz.R
-all: $(FOLDER)/summary.txt $(FOLDER)/failures-by-test.json
+all: $(FOLDER)/summary.txt $(FOLDER)/failures-by-test.json $(FOLDER)/unique_errors.txt

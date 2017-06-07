@@ -112,9 +112,7 @@ $(FOLDER)/summary.txt: $(FOLDER)/failures.json
 	mv $@.tmp $@
 
 $(FOLDER)/unique_errors.txt: $(TEST_FILES)
-	jq '.suites[].cases[].errorDetails' marathon-sandbox/job/marathon-unstable-loop/builds/*.json | sort | uniq -c | sort -n | tee $@.tmp
-	echo "Unique errors: "
-	cat $@.tmp
+	jq '.suites[].cases[].errorDetails' $(FOLDER)/builds/*.json | sort | uniq -c | sort -n | tee $@.tmp
 	mv $@.tmp $@
 
 viz: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-job.tsv $(FOLDER)/job-details.tsv

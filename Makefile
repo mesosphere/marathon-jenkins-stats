@@ -1,4 +1,4 @@
-.PHONY: default all download clean purge load-into-postgres viz ignore clean-missing
+.PHONY: default all download clean purge load-into-postgres viz ignore clean-missing viz
 
 default: all
 
@@ -7,7 +7,7 @@ AUTH:=
 ifneq ($(AUTH),)
 AUTH_ARGS:=--user "$(AUTH)"
 endif
-FETCH_COMMAND:=curl $(AUTH_ARGS) "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/api/json?pretty=true&allBuilds=true" | jq '.builds | map(.number | tostring) | .[1:] | join(" ")' -r
+FETCH_COMMAND:=AUTH_ARGS="$(AUTH_ARGS)" bin/fetch-build-ids $(JOB)
 IDS:=$(shell $(FETCH_COMMAND))
 
 FOLDER:=$(subst %,_,$(JOB))

@@ -1,2 +1,2 @@
 #!/bin/bash
-curl "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/public-marathon-unstable/api/json?pretty=true&allBuilds=true" | jq '.builds | map(.number | tostring) | .[1:] | join(" ")' -r
+curl ${AUTH_ARGS} "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$1/api/json?pretty=true&allBuilds=true" | jq '.builds | map(.number | tostring) | .[1:] | join(" ")' -r

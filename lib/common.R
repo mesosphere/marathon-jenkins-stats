@@ -1,6 +1,6 @@
 read_jobs <- function(filename) {
     df <- read.delim(
-        "marathon-unstable-loop/flattened-job.tsv",
+        filename,
         header = TRUE,
         sep = "\t")
     df$non_empty <- as.logical(df$non_empty)
@@ -24,7 +24,7 @@ read_suite <- function (filename) {
 
 read_job_details <- function(filename) {
     df <-  read.table(
-        job_file("job-details.tsv"),
+        filename,
         header = TRUE,
         sep = "\t",
         colClasses = c("timestamp" = "character"))

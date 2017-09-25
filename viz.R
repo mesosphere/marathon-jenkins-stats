@@ -29,15 +29,6 @@ calc_jitter_factor <- function(nrows, failure_class_name_count) {
     }
 }
 
-render.twice <- function (fn, file.prefix, width, height) {
-    pdf(paste(file.prefix, "pdf", sep="."), width=width, height=height)
-    print(fn())
-    dev.off()
-    svg(paste(file.prefix, "svg", sep="."), width=width, height=height)
-    print(fn())
-    dev.off()
-}
-
 df <- read_suite(job_file("flattened-suite.tsv"))
 job_ids <- sort(unique(df$job_id))
 job_idxs <- data.frame(job_id = job_ids, job_idx = c(1:length(job_ids)))

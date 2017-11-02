@@ -53,7 +53,7 @@ $(FOLDER)/job-details/%.json: | $(FOLDER)/job-details
 	mv $@.tmp $@
 
 $(FOLDER)/builds/%.json: | $(FOLDER)/builds
-	bin/grab-tests $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/testReport/api/json?pretty=true" > $@.tmp
+	bin/grab-tests $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/testReport/api/json" > $@.tmp
 	mv $@.tmp $@
 
 $(FOLDER)/flattened-test/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-test

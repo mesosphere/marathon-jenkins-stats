@@ -108,8 +108,8 @@ $(FOLDER)/failures-by-test.json: $(FOLDER)/failures.json
 
 $(FOLDER)/summary.txt: $(FOLDER)/failures.json
 	cat $(FOLDER)/failures.json | jq '.[] | .failures[] | .' -r | sort | uniq -c | sort -n | tee $@.tmp
-	echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(FOLDER)/failures.json)" | tee -a $@.tmp
-	mv $@.tmp $@
+	@echo "Sample size: $$(jq 'map(select(.suiteRan == true)) | length' $(FOLDER)/failures.json)" | tee -a $@.tmp
+	@mv $@.tmp $@
 
 $(FOLDER)/unique_errors.txt: $(TEST_FILES)
 	jq '.suites[].cases[].errorDetails' $(FOLDER)/builds/*.json | sort | uniq -c | sort -n | tee $@.tmp

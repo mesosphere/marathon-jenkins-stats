@@ -106,23 +106,23 @@ for (plot_index in c(TRUE, FALSE)) {
 job_id <- as.numeric(Sys.getenv("VIZ_JOB_ID", unset = max(job_ids)))
 # change this job_id to visualize a different job!
 job <- df[df$job_id == job_id, ]
-job <- job[order(job$timestamp), ]
+## job <- job[order(job$timestamp), ]
 job$suite <- factor(paste(job$package, job$class_name, sep = "."))
 job$idx <- seq.int(nrow(job))
 job$integration <- grepl("integration", job$package)
 
 job$suite_with_duration <- paste(job$class_name, "\n", "(", round(job$duration, digits=1), "s", ")", sep = "")
 
-render.twice(function() {
-    (
-        ggplot(job, aes(xmin = timestamp, xmax = timestamp + duration, ymin = idx - 0.20, ymax = idx + 0.20)) +
-        geom_rect(aes(fill = integration)) +
-        ## guides(fill = FALSE) +
-        scale_y_reverse() +
-        geom_text(aes(x = timestamp, y = idx - 0.5, label = suite), size=0.5, hjust="left", color = "grey") +
-        labs(y = "suite", title = paste("Timeline - Job #", job_id, " for ", job_name, sep = ""))
-    )
-}, job_file("timeline"), width=12, height=10)
+## render.twice(function() {
+##     (
+##         ggplot(job, aes(xmin = timestamp, xmax = timestamp + duration, ymin = idx - 0.20, ymax = idx + 0.20)) +
+##         geom_rect(aes(fill = integration)) +
+##         ## guides(fill = FALSE) +
+##         scale_y_reverse() +
+##         geom_text(aes(x = timestamp, y = idx - 0.5, label = suite), size=0.5, hjust="left", color = "grey") +
+##         labs(y = "suite", title = paste("Timeline - Job #", job_id, " for ", job_name, sep = ""))
+##     )
+## }, job_file("timeline"), width=12, height=10)
 
 render.twice(function() {
     (

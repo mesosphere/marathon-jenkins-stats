@@ -3,7 +3,7 @@
 (.suites | map(.duration) | add) as $suitedurations |
 ["job_id", "package", "class_name", "tests_total", "tests_passed", "passed", "duration", "timestamp"] as $headers |
 .suites |
-map((.timestamp + "Z") as $timestamp |
+map((if (.timestamp == null) then "" else .timestamp + "Z" end) as $timestamp |
     (.cases | length) as $total |
     (.cases | map(if (.status != "FAILED" and .status != "REGRESSION") then 1 else 0 end) | add) as $passes |
     ((.name) | split(".")) as $name |

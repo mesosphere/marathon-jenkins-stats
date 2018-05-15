@@ -15,8 +15,9 @@ read_suite <- function (filename) {
     df <- read.delim(
         filename,
         header = TRUE,
-        sep = "\t",
-        colClasses = c("timestamp" = "character"))
+        sep = "\t"## ,
+        ## colClasses = c("timestamp" = "character")
+    )
     df$passed <- as.logical(df$passed)
     df$timestamp <- as.POSIXct(sub("T", " ", df$timestamp))
     return (df)
@@ -26,8 +27,9 @@ read_job_details <- function(filename) {
     df <-  read.table(
         filename,
         header = TRUE,
-        sep = "\t",
-        colClasses = c("timestamp" = "character"))
+        sep = "\t"## ,
+        ## colClasses = c("timestamp" = "character")
+    )
 
     return (df[order(df$job_id), ])
 }

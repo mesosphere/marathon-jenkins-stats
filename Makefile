@@ -115,6 +115,10 @@ $(FOLDER)/unique_errors.txt: $(TEST_FILES)
 	jq '.suites[].cases[].errorDetails' $(FOLDER)/builds/*.json | sort | uniq -c | sort -n | tee $@.tmp
 	mv $@.tmp $@
 
-viz: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-job.tsv $(FOLDER)/job-details.tsv
+$(FOLDER)/failures.pdf: $(FOLDER)/flattened-suite.tsv $(FOLDER)/flattened-job.tsv $(FOLDER)/job-details.tsv
 	JOB=$(FOLDER) R --no-save < viz.R
-all: $(FOLDER)/summary.txt $(FOLDER)/failures-by-test.json $(FOLDER)/unique_errors.txt
+
+viz: $(FOLDER)/failures.pdf
+	JOB=$(FOLDER) R --no-save < viz.R
+
+all: $(FOLDER)/summary.txt $(FOLDER)/failures-by-test.json $(FOLDER)/unique_errors.txt $(FOLDER)/failures.pdf

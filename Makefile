@@ -49,11 +49,11 @@ ignore:
 	$(foreach file, $(TEST_FILES), [ ! -f $(file) ] && echo '{"suites": []}' > $(file); )
 
 $(FOLDER)/job-details/%.json: | $(FOLDER)/job-details
-	bin/grab-details $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/api/json" > $@.tmp
+	bin/grab-details $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/job/$(JOB)/$(basename $(@F))/api/json" > $@.tmp
 	mv $@.tmp $@
 
 $(FOLDER)/builds/%.json: | $(FOLDER)/builds
-	bin/grab-tests $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/testReport/api/json" > $@.tmp
+	bin/grab-tests $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/job/$(JOB)/$(basename $(@F))/testReport/api/json" > $@.tmp
 	mv $@.tmp $@
 
 $(FOLDER)/flattened-test/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-test
@@ -73,7 +73,7 @@ $(FOLDER)/flattened-job/%.tsv: $(FOLDER)/builds/%.json | $(FOLDER)/flattened-job
 	mv $@.tmp $@
 
 $(FOLDER)/node-id/%.html: | $(FOLDER)/node-id
-	bin/grab-node-id $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/view/Marathon/job/$(JOB)/$(basename $(@F))/execution/node/3/log/" > $@.tmp
+	bin/grab-node-id $(AUTH_ARGS) -f "https://jenkins.mesosphere.com/service/jenkins/job/$(JOB)/$(basename $(@F))/execution/node/3/log/" > $@.tmp
 	mv $@.tmp $@
 
 $(FOLDER)/node-id.tsv: $(foreach ID,$(IDS) $(EXISTING_IDS),$(FOLDER)/node-id/$(ID).html)

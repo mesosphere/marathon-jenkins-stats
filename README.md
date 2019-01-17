@@ -52,7 +52,6 @@ You can load the data into postgres. (I haven't tested this with a remote instan
 
 To visualize the data set, you will need R installed. Because many of the dependencies have native extensions, you should install a version against which you can compile. For Mac OS X:
 ```
-$ brew tap homebrew/science
 $ brew install R
 ```
 is a good option.
